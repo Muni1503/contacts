@@ -1,10 +1,12 @@
 const asyncHandler=require("express-async-handler");
+const Contact=require("../models/contactModel");
 //@desc-get all contacts
 //route-GET/api/contacts
 //@access public
 
 const getcontacts=asyncHandler(async(req,res)=>{
-    res.status(200).json({message:"get all contact"});
+    contacts=await Contact.find();
+    res.status(200).json(contacts);
 });
 
 //@desc-get all contacts
@@ -12,7 +14,12 @@ const getcontacts=asyncHandler(async(req,res)=>{
 //@access public
 
 const getcontact=asyncHandler(async(req,res)=>{
-    res.status(200).json({message:`get a contact ${req.params.id}`});
+    const contact= await Contact.findById(req.params.id);
+    if(!contact){
+        res.status(404);
+        throw new Error("contact not found");
+    }
+    res.status(200).json(contact);
 });
 
 //@desc-get all contacts
@@ -21,12 +28,18 @@ const getcontact=asyncHandler(async(req,res)=>{
 
 const createcontact=asyncHandler(async(req,res)=>{
     console.log("The body is ",req.body);
-    const{name,email,phonenum}=req.body;
-    if(!name||!email||!phonenum){
+    const{name,email,phone}=req.body;
+    if(!name||!email||!phone){
         req.status(400);
         throw new error("all fields are mandatory");
     }
-    res.status(201).json({message:"create contact"});
+
+    const contact=await Contact.create({
+        name,//if we donot define name earlier then it will be req.body.name
+        email,
+        phone,
+    })
+    res.status(201).json(contact);
 });
 
 
@@ -35,15 +48,38 @@ const createcontact=asyncHandler(async(req,res)=>{
 //@access public
 
 const updatecontact=asyncHandler(async(req,res)=>{
-    res.status(201).json({message:`update the content of ${req.params.id}`});
+    const contact= await Contact.findById(req.params.id);
+    if(!contact){
+        res.status(404);
+        throw new Error("contact not found");
+    }
+
+    const updatedContact=await Contact.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {new:true}
+    );
+    res.status(201).json(updatedContact);
 });
 
 //@desc-get all contacts
 //route-GET/api/contacts
 //@access public
 
-const deletecontact=asyncHandler(async(req,res)=>{
-    res.status(201).json({message:`${req.params.id} gets deleted`});
+const deletecontact = asyncHandler(async (req, res) => {
+    const contact= await Contact.findById(req.params.id);
+    if(!contact){
+        res.status(404);
+        throw new Error("contact not found");
+    }
+    const result = await Contact.deleteOne({ _id: contact });
+
+    if (result.deletedCount === 0) {
+        res.status(404);
+        throw new Error("Contact not found");
+    }
+
+    res.status(204).json(contact);
 });
 
 
