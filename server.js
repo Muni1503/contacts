@@ -9,7 +9,8 @@ const port=process.env.PORT|| 5000;
 //setting a middleware
 connectdb();
 app.use(express.json());
-app.use("/api/contacts",require("./routes/getcontacts"));
+app.use("/api/contacts",require("./routes/contactRoutes"));
+app.use("/api/users",require("./routes/userRoutes"));
 app.use(errorHandler);
 
 app.listen(port,()=>{
