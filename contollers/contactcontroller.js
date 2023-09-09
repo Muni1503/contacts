@@ -2,16 +2,16 @@ const asyncHandler=require("express-async-handler");
 const Contact=require("../models/contactModel");
 //@desc-get all contacts
 //route-GET/api/contacts
-//@access public
+//@access private
 
 const getcontacts=asyncHandler(async(req,res)=>{
-    contacts=await Contact.find();
+    contacts=await Contact.find({user_id:req.user.id});
     res.status(200).json(contacts);
 });
 
 //@desc-get all contacts
 //route-GET/api/contacts
-//@access public
+//@access private
 
 const getcontact=asyncHandler(async(req,res)=>{
     const contact= await Contact.findById(req.params.id);
@@ -24,7 +24,7 @@ const getcontact=asyncHandler(async(req,res)=>{
 
 //@desc-get all contacts
 //route-GET/api/contacts
-//@access public
+//@access private
 
 const createcontact=asyncHandler(async(req,res)=>{
     console.log("The body is ",req.body);
@@ -38,6 +38,7 @@ const createcontact=asyncHandler(async(req,res)=>{
         name,//if we donot define name earlier then it will be req.body.name
         email,
         phone,
+        user_id:req.user.id,
     })
     res.status(201).json(contact);
 });
@@ -45,13 +46,19 @@ const createcontact=asyncHandler(async(req,res)=>{
 
 //@desc-get all contacts
 //route-GET/api/contacts
-//@access public
+//@access private
 
 const updatecontact=asyncHandler(async(req,res)=>{
     const contact= await Contact.findById(req.params.id);
     if(!contact){
         res.status(404);
         throw new Error("contact not found");
+    }
+
+    if(contact.user_id.toString()!==req.user.id){
+        res.status(403);
+        throw new Error("user donot have permission to update another user contacts");
+
     }
 
     const updatedContact=await Contact.findByIdAndUpdate(
@@ -64,7 +71,7 @@ const updatecontact=asyncHandler(async(req,res)=>{
 
 //@desc-get all contacts
 //route-GET/api/contacts
-//@access public
+//@access private
 
 const deletecontact = asyncHandler(async (req, res) => {
     const contact= await Contact.findById(req.params.id);
@@ -78,6 +85,12 @@ const deletecontact = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error("Contact not found");
     }
+    if(contact.user_id.toString()!==req.user.id){
+        res.status(403);
+        throw new Error("user donot have permission to delete another user contacts");
+
+    }
+    await Contact.deleteOne({_id:req.params.id});
 
     res.status(204).json(contact);
 });
